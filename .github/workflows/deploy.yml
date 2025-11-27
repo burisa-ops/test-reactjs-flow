@@ -4,9 +4,9 @@ on:
   # run each merge to deployment env branches
   push:
     branches:
-      - main
       - develop
       - release/**
+
   # manual trigger
   workflow_dispatch:
     inputs:
@@ -51,6 +51,7 @@ jobs:
 
       - name: Validate Deployment Eligibility
         run: |
+          EVENT_NAME="${{ github.event_name }}"
           TARGET_ENV="${{ github.event.inputs.environment }}"
           DEPLOY_REF="${{ github.event.inputs.ref }}"
           GIT_REF="${{ github.ref_name }}"
@@ -62,15 +63,17 @@ jobs:
             DEPLOY_BRANCH="$GIT_REF"
           fi
 
-          # Determine default environment deployments
-          if [[ "$DEPLOY_BRANCH" == "develop" ]]; then
-            TARGET_ENV="dev"
-          elif [[ "$DEPLOY_BRANCH" == "main" || "$DEPLOY_BRANCH" =~ ^release/ ]]; then
-            TARGET_ENV="uat"
+          # Default environment selection for push/merge events
+          if [[ "$EVENT_NAME" == "push" ]]; then
+            if [[ "$DEPLOY_BRANCH" == "develop" ]]; then
+              TARGET_ENV="dev"
+            elif [[ "$DEPLOY_BRANCH" =~ ^release/ ]]; then
+              TARGET_ENV="uat"
+            fi
           fi
 
           # Production environment additional validation rules
-          if [[ "$TARGET_ENV" == "prod" ]]; then
+          if [[ "$EVENT_NAME" == "workflow_dispatch" && "$TARGET_ENV" == "prod" ]]; then
             if [[ ! "$DEPLOY_BRANCH" =~ ^release/ ]]; then
               echo "ERROR: For 'prod', branch/tag must match release/** format!"
               exit 1
