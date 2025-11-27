@@ -37,7 +37,7 @@ env:
   DEV_AWS_ACCOUNT_ID: '166669426596'
 
 jobs:
-  build:
+  build-test-deploy:
     runs-on: ubuntu-latest
     defaults:
       run:
