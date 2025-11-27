@@ -37,37 +37,5 @@ jobs:
           dev_aws_account_id: ${{ env.DEV_AWS_ACCOUNT_ID }}
           gh_assume_role: ${{ env.GH_ASSUME_ROLE }}
 
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            npm-${{ runner.os }}-
-      
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Run ESLint
-        run: npm run lint
-
-      - name: Report ESLint with ReviewDog
-        if: always()
-        run: |
-          npm run lint -- --format checkstyle | reviewdog -f=checkstyle -name="eslint" -reporter=github-pr-review -fail-level=warning
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }} # for reviewdog rate-limiting
-
-      - name: Run CI non-interactive tests (JUnit output)
-        run: npm run test:ci
-        env:
-          JEST_JUNIT_OUTPUT_DIR: ./junit
-          JEST_JUNIT_OUTPUT_NAME: junit.xml
-
-      - name: Publish Test Report
-        uses: dorny/test-reporter@v2
-        if: ${{ ! cancelled() }}
-        with:
-          name: JEST Tests
-          path: ./junit/*.xml
-          reporter: jest-junit
+      - name: Preparations and Quality Gates
+        uses: ./.github/actions/install-quality-gates-setup
