@@ -45,14 +45,17 @@ jobs:
           restore-keys: |
             npm-${{ runner.os }}-
       
-      - name: Install dependencies
+      - name: Install Dependencies
         run: npm ci
 
       - name: Run ESLint
         run: npm run lint
 
-      - name: Run Tests & Generate Coverage
+      - name: Run CI non-interactive tests (JUnit output)
         run: npm run test:ci
+        env:
+          JEST_JUNIT_OUTPUT_DIR: ./junit
+          JEST_JUNIT_OUTPUT_NAME: junit.xml
 
       - name: Run Build
         run: npm run build
