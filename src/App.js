@@ -10,6 +10,9 @@ function FeatureCard({ icon, title, children }) {
   );
 }
 
+// INTENTIONAL LINT ERROR: Unused variable
+const unusedVar = 123;
+
 function App() {
   return (
     <div className="App">
