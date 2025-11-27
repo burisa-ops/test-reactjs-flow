@@ -26,7 +26,7 @@ on:
           - develop
           - main
       custom_branch:
-        description: 'Release branch name (for UAT and Prod deployments)'
+        description: 'Release branch name (required for PROD deployments)'
         type: string
         required: false
 
