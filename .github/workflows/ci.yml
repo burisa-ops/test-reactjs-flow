@@ -41,10 +41,10 @@ jobs:
         run: npm ci
 
       - name: Run ESLint
-        run: npm run lint || echo 'Lint errors found.'
+        run: npm run lint
 
       - name: Run Tests & Generate Coverage
-        run: npm test -- --coverage --watchAll=false --coverageReporters=clover
+        run: npm run test:ci
 
       - name: Coverage report with reviewdog
         if: always()

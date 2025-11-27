@@ -16,6 +16,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "test:ci": "react-scripts test --ci --coverage --watchAll=false --coverageReporters=clover",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx src",
     "eject": "react-scripts eject"
   },
