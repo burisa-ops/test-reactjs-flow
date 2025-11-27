@@ -18,7 +18,7 @@ env:
   DEV_AWS_ACCOUNT_ID: '166669426596'
 
 jobs:
-  build:
+  validate:
     runs-on: ubuntu-latest
     defaults:
       run:

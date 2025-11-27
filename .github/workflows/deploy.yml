@@ -18,17 +18,11 @@ on:
           - dev
           - uat
           - prod
-      branch:
-        description: 'Branch to deploy'
-        type: choice
-        required: true
-        options:
-          - develop
-          - main
-      custom_branch:
-        description: 'Release branch name (required for PROD deployments)'
+      ref:
+        description: 'Branch/tag to deploy ("release/x" is required for prod!)'
         type: string
-        required: false
+        required: true
+        default: 'develop'
 
 permissions:
   id-token: write # required for OIDC authentication
@@ -43,7 +37,7 @@ env:
   DEV_AWS_ACCOUNT_ID: '166669426596'
 
 jobs:
-  build:
+  build-test-deploy:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -53,57 +47,34 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: >-
-            ${{ github.event.inputs.custom_branch && github.event.inputs.custom_branch != '' && github.event.inputs.custom_branch || github.event.inputs.branch || github.ref_name }}
+            ${{ github.event.inputs.ref || github.ref_name }}
 
       - name: Validate Deployment Eligibility
         run: |
-          TARGET_ENV="${{ github.event.inputs.environment }}"
-          DEPLOY_BRANCH="${{ github.event.inputs.branch }}"
-          CUSTOM_BRANCH="${{ github.event.inputs.custom_branch }}"
+          TARGET_ENV="${{ github.event.inputs.environment || 'dev' }}"
+          DEPLOY_REF="${{ github.event.inputs.ref }}"
           GIT_REF="${{ github.ref_name }}"
 
-          # Decide the target branch (prefer custom_branch if set, fallback to git ref from a push event)
-          if [[ ! -z "$CUSTOM_BRANCH" ]]; then
-            DEPLOY_BRANCH="$CUSTOM_BRANCH"
-          elif [[ ! -z "$DEPLOY_BRANCH" ]]; then
-            DEPLOY_BRANCH="$DEPLOY_BRANCH"
+          # Target branch (fallback to git ref from a push event)
+          if [[ ! -z "$DEPLOY_REF" ]]; then
+            DEPLOY_BRANCH="$DEPLOY_REF"
           else
             DEPLOY_BRANCH="$GIT_REF"
           fi
 
-          # Determine default environment (fallback to dev/uat based on branch if from a push event)
-          if [[ -z "$TARGET_ENV" ]]; then
-            if [[ "$DEPLOY_BRANCH" == "develop" ]]; then
-              TARGET_ENV="dev"
-            elif [[ "$DEPLOY_BRANCH" == "main" || "$DEPLOY_BRANCH" =~ ^release/ ]]; then
-              TARGET_ENV="uat"
-            fi
+          # Determine default environment deployments
+          if [[ "$DEPLOY_BRANCH" == "develop" ]]; then
+            TARGET_ENV="dev"
+          elif [[ "$DEPLOY_BRANCH" == "main" || "$DEPLOY_BRANCH" =~ ^release/ ]]; then
+            TARGET_ENV="uat"
           fi
 
-          # Additional validation rules
-          if [[ "$TARGET_ENV" == "dev" ]]; then
-            # dev: use develop by default, fallback to custom_branch if it exists
-            if [[ "$DEPLOY_BRANCH" != "develop" && -z "$CUSTOM_BRANCH" ]]; then
-              echo "ERROR: For 'dev' environment, use 'develop' branch or provide a valid custom_branch!"
+          # Production environment additional validation rules
+          if [[ "$TARGET_ENV" == "prod" ]]; then
+            if [[ ! "$DEPLOY_BRANCH" =~ ^release/ ]]; then
+              echo "ERROR: For 'prod', branch/tag must match release/** format!"
               exit 1
             fi
-          elif [[ "$TARGET_ENV" == "uat" ]]; then
-            # uat: use main/release/x by default, fallback to custom_branch if it exists
-            if [[ "$DEPLOY_BRANCH" != "main" && ! "$DEPLOY_BRANCH" =~ ^release/ && -z "$CUSTOM_BRANCH" ]]; then
-              echo "ERROR: For 'uat' environment, use 'main'/'release/x' branch or provide a valid custom_branch!"
-              exit 1
-            fi
-          elif [[ "$TARGET_ENV" == "prod" ]]; then
-            # prod: only custom_branch set and must match release/x*
-            if [[ -z "$CUSTOM_BRANCH" ]]; then
-              echo "ERROR: For 'prod', custom_branch must be provided and must match release/x* format!"
-              exit 1
-            fi
-            if [[ ! "$CUSTOM_BRANCH" =~ ^release/ ]]; then
-              echo "ERROR: For 'prod', custom_branch must match release/x* format!"
-              exit 1
-            fi
-            DEPLOY_BRANCH="$CUSTOM_BRANCH"
           fi
 
           echo "Deploying branch '${DEPLOY_BRANCH}' to '${TARGET_ENV}' environment.."
