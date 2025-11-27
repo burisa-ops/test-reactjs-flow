@@ -117,6 +117,7 @@ jobs:
           node_version: ${{ env.NODE_VERSION }}
           environment: ${{ env.TARGET_ENV }}
           prod_aws_account_id: ${{ env.PROD_AWS_ACCOUNT_ID }}
+          uat_aws_account_id: ${{ env.PROD_AWS_ACCOUNT_ID }}
           dev_aws_account_id: ${{ env.DEV_AWS_ACCOUNT_ID }}
           gh_assume_role: ${{ env.GH_ASSUME_ROLE }}
 
