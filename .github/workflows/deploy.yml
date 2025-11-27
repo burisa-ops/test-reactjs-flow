@@ -1,10 +1,12 @@
 name: 'Deploy pipeline'
 
 on:
-  # run each merge to deployment env branches
+  # automatic trigger on push to specific branches/tags
   push:
     branches:
       - develop
+      - release/**
+    tags:
       - release/**
 
   # manual trigger
@@ -72,7 +74,7 @@ jobs:
             fi
           fi
 
-          # Production environment additional validation rules
+          # Production environment additional validation rules - no automatic deploys
           if [[ "$EVENT_NAME" == "workflow_dispatch" && "$TARGET_ENV" == "prod" ]]; then
             if [[ ! "$DEPLOY_BRANCH" =~ ^release/ ]]; then
               echo "ERROR: For 'prod', branch/tag must match release/** format!"
