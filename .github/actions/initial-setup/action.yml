@@ -42,7 +42,7 @@ runs:
         if [[ "$ENVIRONMENT" == "prod" ]]
         then
           echo "role_arn=arn:aws:iam::${{ inputs.prod_aws_account_id }}:role/${{ inputs.gh_assume_role }}" >> $GITHUB_OUTPUT
-        if [[ "$ENVIRONMENT" == "uat" ]]
+        elif [[ "$ENVIRONMENT" == "uat" ]]
         then
           echo "role_arn=arn:aws:iam::${{ inputs.uat_aws_account_id }}:role/${{ inputs.gh_assume_role }}" >> $GITHUB_OUTPUT
         else
