@@ -1,12 +1,11 @@
 name: 'Deploy pipeline'
 
 on:
-  # run each merge to main branch
+  # run each merge to deployment env branches
   push:
     branches:
       - main
       - dev
-      - release/*
   
 permissions:
   id-token: write # required for OIDC authentication
@@ -63,4 +62,8 @@ jobs:
       - name: Deploy Build And Reset CloudFront Cache
         run: |
           echo "S3 deploy..."
+          ls -al
+
           echo "CDN cache reset..."
+          aws --version
+          aws sts get-caller-identity
