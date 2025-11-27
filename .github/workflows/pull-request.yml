@@ -13,9 +13,9 @@ env:
   NODE_VERSION: '18.x'
   TARGET_ENV: 'dev'
   GH_ASSUME_ROLE: 'GitHubActionsAssumeRole'
-  DEV_AWS_ACCOUNT_ID: '166669426596'
-  UAT_AWS_ACCOUNT_ID: '166669426596'
   PROD_AWS_ACCOUNT_ID: '173381260310'
+  UAT_AWS_ACCOUNT_ID: '166669426596'
+  DEV_AWS_ACCOUNT_ID: '166669426596'
 
 jobs:
   build:
@@ -33,7 +33,7 @@ jobs:
           node_version: ${{ env.NODE_VERSION }}
           environment: 'dev'
           prod_aws_account_id: ${{ env.PROD_AWS_ACCOUNT_ID }}
-          uat_aws_account_id: ${{ env.PROD_AWS_ACCOUNT_ID }}
+          uat_aws_account_id: ${{ env.UAT_AWS_ACCOUNT_ID }}
           dev_aws_account_id: ${{ env.DEV_AWS_ACCOUNT_ID }}
           gh_assume_role: ${{ env.GH_ASSUME_ROLE }}
 
