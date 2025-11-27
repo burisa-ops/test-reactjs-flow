@@ -28,11 +28,11 @@ jobs:
       - name: Initial Setup
         uses: ./.github/actions/initial-setup
         with:
-          node_version: $NODE_VERSION
-          environment:  'dev' # TODO: change to matrix or variable per branch
-          prod_aws_account_id: $PROD_AWS_ACCOUNT_ID
-          dev_aws_account_id: $DEV_AWS_ACCOUNT_ID
-          gh_assume_role: $GH_ASSUME_ROLE
+          node_version: ${{ env.NODE_VERSION }}
+          environment: 'dev' # TODO: change to matrix or variable per branch
+          prod_aws_account_id: ${{ env.PROD_AWS_ACCOUNT_ID }}
+          dev_aws_account_id: ${{ env.DEV_AWS_ACCOUNT_ID }}
+          gh_assume_role: ${{ env.GH_ASSUME_ROLE }}
 
       - name: Cache dependencies
         uses: actions/cache@v3
