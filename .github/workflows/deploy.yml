@@ -5,8 +5,33 @@ on:
   push:
     branches:
       - main
-      - dev
-  
+      - develop
+      - release/**
+
+  # manual trigger
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        type: choice
+        required: true
+        options:
+          - dev
+          - uat
+          - prod
+      branch:
+        description: 'Branch to deploy'
+        type: choice
+        required: true
+        options:
+          - main
+          - develop
+          - release/x
+          - custom
+      custom_branch:
+        description: 'Custom branch name (only if "custom" selected above)'
+        required: false
+
 permissions:
   id-token: write # required for OIDC authentication
   contents: write # ensures the token can write repository content
@@ -15,6 +40,7 @@ env:
   NODE_VERSION: '18.x'
   GH_ASSUME_ROLE: 'GitHubActionsAssumeRole'
   DEV_AWS_ACCOUNT_ID: '166669426596'
+  UAT_AWS_ACCOUNT_ID: '166669426596'
   PROD_AWS_ACCOUNT_ID: '173381260310'
 
 jobs:
@@ -26,12 +52,58 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+        with:
+          ref: >
+            ${{ github.event.inputs.branch == 'custom' && github.event.inputs.custom_branch != '' && github.event.inputs.custom_branch || github.event.inputs.branch || github.ref_name }}
+
+      - name: Validate Deployment Eligibility
+        run: |
+          TARGET_ENV="${{ github.event.inputs.environment }}"
+          DEPLOY_BRANCH="${{ github.event.inputs.branch }}"
+          CUSTOM_BRANCH="${{ github.event.inputs.custom_branch }}"
+          GIT_REF="${{ github.ref_name }}"
+
+          # If custom branch is provided, use it
+          if [[ ! -z "$CUSTOM_BRANCH" ]]; then
+            DEPLOY_BRANCH="$CUSTOM_BRANCH"
+          fi
+
+          # If branch is unset, use git ref (push trigger)
+          if [[ -z "$DEPLOY_BRANCH" ]]; then
+            DEPLOY_BRANCH="$GIT_REF"
+          fi
+
+          # Set environment default if unset (push trigger)
+          if [[ -z "$TARGET_ENV" ]]; then
+            if [[ "$DEPLOY_BRANCH" == "develop" ]]; then
+              TARGET_ENV="dev"
+            elif [[ "$DEPLOY_BRANCH" == "main" || "$DEPLOY_BRANCH" =~ ^release/ ]]; then
+              TARGET_ENV="uat"
+            fi
+          fi
+
+          # Manual trigger to production environment from release/* branches
+          if [[ "$DEPLOY_BRANCH" =~ ^release/ && "$TARGET_ENV" == "prod" ]]; then
+            TARGET_ENV="prod"
+          fi
+
+          # Validate prod from branch
+          if [[ "$TARGET_ENV" == "prod" ]]; then
+            if [[ "$DEPLOY_BRANCH" != "main" && ! "$DEPLOY_BRANCH" =~ ^release/ ]]; then
+              echo "ERROR: Only 'main' or 'release/x' branches can be deployed to 'prod' environment"
+              exit 1
+            fi
+          fi
+
+          echo "Deploying branch '${DEPLOY_BRANCH}' to '${TARGET_ENV}' environment.."
+          echo "TARGET_ENV=$TARGET_ENV" >> $GITHUB_ENV
+          echo "DEPLOY_BRANCH=$DEPLOY_BRANCH" >> $GITHUB_ENV
+
       - name: Initial Setup
         uses: ./.github/actions/initial-setup
         with:
           node_version: ${{ env.NODE_VERSION }}
-          environment: 'dev' # TODO: change to matrix or variable per branch
+          environment: ${{ env.TARGET_ENV }}
           prod_aws_account_id: ${{ env.PROD_AWS_ACCOUNT_ID }}
           dev_aws_account_id: ${{ env.DEV_AWS_ACCOUNT_ID }}
           gh_assume_role: ${{ env.GH_ASSUME_ROLE }}
@@ -61,8 +133,10 @@ jobs:
 
       - name: Deploy Build And Reset CloudFront Cache
         run: |
+          echo "Deploying in environment $TARGET_ENV from branch $DEPLOY_BRANCH..."
+ 
           echo "S3 deploy..."
-          ls -al
+          ls -al build/
 
           echo "CDN cache reset..."
           aws --version
