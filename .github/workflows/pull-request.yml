@@ -1,0 +1,50 @@
+name: 'Pull Request pipeline'
+
+on:
+  # run each Pull Request is opened  
+  pull_request:
+  
+permissions:
+  contents: read # required to run quality gates and build
+  pull-requests: write # required for reviewdog to post PR comments
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+
+      - name: Setup ReviewDog
+        uses: reviewdog/action-setup@v1.5.0
+        with:
+          reviewdog_version: latest
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
+      
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Tests & Generate Coverage
+        run: npm run test:ci
+
+      - name: Coverage report with reviewdog
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          reviewdog -name="jest-coverage" -f=clover -reporter=github-pr-review -fail-level=warning < coverage/clover.xml
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }} # for reviewdog rate-limiting
