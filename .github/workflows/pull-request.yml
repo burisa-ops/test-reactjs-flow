@@ -5,25 +5,34 @@ on:
   pull_request:
   
 permissions:
-  contents: read # required to run quality gates and build
+  id-token: write # required for OIDC authentication
+  contents: write # ensures the token can write repository content
   pull-requests: write # required for reviewdog to post PR comments
+
+env:
+  NODE_VERSION: "18.x"
+  GH_ASSUME_ROLE: "GitHubActionsAssumeRole"
+  DEV_AWS_ACCOUNT_ID: "166669426596"
+  PROD_AWS_ACCOUNT_ID: "173381260310"
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Initial Setup
+        uses: ./.github/actions/initial-setup
         with:
-          node-version: '18.x'
-
-      - name: Setup ReviewDog
-        uses: reviewdog/action-setup@v1.5.0
-        with:
-          reviewdog_version: latest
+          node_version: $NODE_VERSION
+          environment:  "dev" # TODO: change to matrix or variable per branch
+          prod_aws_account_id: $PROD_AWS_ACCOUNT_ID
+          dev_aws_account_id: $DEV_AWS_ACCOUNT_ID
+          gh_assume_role: $GH_ASSUME_ROLE
 
       - name: Cache dependencies
         uses: actions/cache@v3
@@ -43,7 +52,7 @@ jobs:
         run: npm run test:ci
 
       - name: Coverage report with reviewdog
-        if: always() && github.event_name == 'pull_request'
+        if: always()
         run: |
           reviewdog -name="jest-coverage" -f=clover -reporter=github-pr-review -fail-level=warning < coverage/clover.xml
         env:
