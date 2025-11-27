@@ -51,7 +51,7 @@ jobs:
 
       - name: Validate Deployment Eligibility
         run: |
-          TARGET_ENV="${{ github.event.inputs.environment || 'dev' }}"
+          TARGET_ENV="${{ github.event.inputs.environment }}"
           DEPLOY_REF="${{ github.event.inputs.ref }}"
           GIT_REF="${{ github.ref_name }}"
 
