@@ -23,13 +23,12 @@ on:
         type: choice
         required: true
         options:
-          - main
           - develop
+          - main
       custom_branch:
         description: 'Release branch name (for UAT and Prod deployments)'
         type: string
         required: false
-        default: 'release/x'
 
 permissions:
   id-token: write # required for OIDC authentication
