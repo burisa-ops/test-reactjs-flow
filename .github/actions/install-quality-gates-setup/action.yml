@@ -1,0 +1,44 @@
+name: 'install-quality-gates-setup'
+description: 'Sets up package installation and caching, runs defined Quality Gates'
+
+runs:
+  using: "composite"
+  steps:
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
+      
+      - name: Install Dependencies
+        shell: bash
+        run: npm ci
+
+      - name: Run ESLint
+        shell: bash
+        run: npm run lint
+
+      - name: Report ESLint with ReviewDog
+        if: always() && github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          npm run lint -- --format checkstyle | reviewdog -f=checkstyle -name="eslint" -reporter=github-pr-review -fail-level=warning
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }} # for reviewdog rate-limiting
+
+      - name: Run CI non-interactive tests (JUnit output)
+        shell: bash
+        run: npm run test:ci
+        env:
+          JEST_JUNIT_OUTPUT_DIR: ./junit
+          JEST_JUNIT_OUTPUT_NAME: junit.xml
+
+      - name: Publish Test Report
+        uses: dorny/test-reporter@v2
+        if: always()
+        with:
+          name: JEST Tests
+          path: ./junit/*.xml
+          reporter: jest-junit
