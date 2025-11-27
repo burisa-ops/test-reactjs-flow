@@ -63,3 +63,11 @@ jobs:
         env:
           JEST_JUNIT_OUTPUT_DIR: ./junit
           JEST_JUNIT_OUTPUT_NAME: junit.xml
+
+      - name: Publish Test Report
+        uses: dorny/test-reporter@v2
+        if: ${{ ! cancelled() }}
+        with:
+          name: JEST Tests
+          path: ./junit/*.xml
+          reporter: jest-junit
