@@ -64,7 +64,7 @@ jobs:
           JEST_JUNIT_OUTPUT_DIR: ./junit
           JEST_JUNIT_OUTPUT_NAME: junit.xml
 
-      - name: Publich Test Report
+      - name: Publish Test Report
         uses: dorny/test-reporter@v2
         if: ${{ ! cancelled() }}
         with:
