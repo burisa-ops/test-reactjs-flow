@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="3" failures="0" errors="0" time="0.587">
+  <testsuite name="App core UI and features" errors="0" failures="0" skipped="0" timestamp="2025-11-27T11:36:58" time="0.154" tests="3">
+    <testcase classname="App core UI and features renders app header title" name="App core UI and features renders app header title" time="0.012">
+    </testcase>
+    <testcase classname="App core UI and features renders all feature cards" name="App core UI and features renders all feature cards" time="0.002">
+    </testcase>
+    <testcase classname="App core UI and features renders github link" name="App core UI and features renders github link" time="0.014">
+    </testcase>
+  </testsuite>
+</testsuites>

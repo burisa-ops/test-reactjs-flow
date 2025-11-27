@@ -48,12 +48,15 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
-      - name: Run Tests & Generate Coverage
+      - name: Run CI non-interactive tests (JUnit output)
+        env:
+          JEST_JUNIT_OUTPUT_DIR: ./junit
+          JEST_JUNIT_OUTPUT_NAME: junit.xml
         run: npm run test:ci
 
-      - name: Coverage report with reviewdog
-        if: always()
+      - name: Report Jest JUnit coverage with reviewdog
+        if: always() && github.event_name == 'pull_request'
         run: |
-          reviewdog -name="jest-coverage" -f=clover -reporter=github-pr-review -fail-level=warning < coverage/clover.xml
+          reviewdog -name="jest-junit" -f=junit -reporter=github-pr-review -fail-level=warning < junit/junit.xml
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }} # for reviewdog rate-limiting
