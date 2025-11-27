@@ -13,10 +13,10 @@ permissions:
   contents: write # ensures the token can write repository content
 
 env:
-  NODE_VERSION: "18.x"
-  GH_ASSUME_ROLE: "GitHubActionsAssumeRole"
-  DEV_AWS_ACCOUNT_ID: "166669426596"
-  PROD_AWS_ACCOUNT_ID: "173381260310"
+  NODE_VERSION: '18.x'
+  GH_ASSUME_ROLE: 'GitHubActionsAssumeRole'
+  DEV_AWS_ACCOUNT_ID: '166669426596'
+  PROD_AWS_ACCOUNT_ID: '173381260310'
 
 jobs:
   build:
@@ -32,7 +32,7 @@ jobs:
         uses: ./.github/actions/initial-setup
         with:
           node_version: $NODE_VERSION
-          environment:  "dev" # TODO: change to matrix or variable per branch
+          environment: 'dev' # TODO: change to matrix or variable per branch
           prod_aws_account_id: $PROD_AWS_ACCOUNT_ID
           dev_aws_account_id: $DEV_AWS_ACCOUNT_ID
           gh_assume_role: $GH_ASSUME_ROLE
