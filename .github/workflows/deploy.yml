@@ -1,0 +1,84 @@
+name: 'Deploy pipeline'
+
+on:
+  # automatic trigger on push to specific branches/tags
+  push:
+    branches:
+      - main
+
+  # manual trigger
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        type: choice
+        required: true
+        options:
+          - uat
+          - prod
+      ref:
+        description: 'Branch/tag to deploy ("release/x" is required for prod!)'
+        type: string
+        required: true
+        default: 'release/x'
+
+permissions:
+  id-token: write # required for OIDC authentication
+  contents: write # ensures the token can write repository content
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    environment: 
+      name: ${{ github.event.inputs.environment || 'dev' }}
+      url: ${{ vars.ENVIRONMENT_URL }}
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: >-
+            ${{ github.event.inputs.ref || github.ref_name }}
+
+      - name: Setup Node.js from .nvmrc
+        id: setup-node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Setup ReviewDog
+        id: setup-reviewdog
+        uses: reviewdog/action-setup@v1.5.0
+        with:
+          reviewdog_version: latest
+      
+      - name: AWS Credentials Setup
+        id: aws-credentials-setup
+        uses: ./.github/actions/aws-credentials-setup
+        with:          
+          aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
+          gh_assume_role: ${{ vars.GH_ASSUME_ROLE }}
+          deploy_role: ${{ vars.DEPLOY_ROLE }}
+          environment: ${{ github.job.environment }}
+
+      - name: Preparations and Quality Gates
+        id: quality-gates
+        uses: ./.github/actions/install-quality-gates-setup
+
+      - name: Run Build
+        id: build
+        run: npm run build
+
+      - name: Deploy Environment
+        id: deploy
+        uses: ./.github/actions/deploy-to-aws
+        with:
+          aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
+          gh_assume_role: ${{ vars.GH_ASSUME_ROLE }}
+          environment: ${{ github.job.environment }}
+          environment_url: ${{ vars.ENVIRONMENT_URL }}
+          s3_bucket: ${{ vars.S3_BUCKET_NAME }}
+          cloudfront_distribution_id: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
