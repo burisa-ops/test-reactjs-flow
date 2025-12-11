@@ -69,6 +69,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           edit-mode: replace
+          comment-id: preview-environment-url
           body: |
             🚀 Preview environment URL: [${{ steps.deploy.outputs.env_url }}](${{ steps.deploy.outputs.env_url }})
           token: ${{ secrets.GITHUB_TOKEN }}
