@@ -35,8 +35,8 @@ runs:
           echo "s3_path=preview-envs/PR-${{ inputs.pr_number }}/" >> $GITHUB_OUTPUT
           echo "cf_path=/preview-envs/PR-${{ inputs.pr_number }}/*" >> $GITHUB_OUTPUT
         else
-          echo "s3_path=''" >> $GITHUB_OUTPUT
-          echo "cf_path=/*" >> $GITHUB_OUTPUT
+          echo "s3_path=/app/" >> $GITHUB_OUTPUT
+          echo "cf_path=/app/*" >> $GITHUB_OUTPUT
         fi
 
     - name: Sync build output to S3
