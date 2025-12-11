@@ -1,0 +1,56 @@
+name: 'Delete Preview Environment on AWS'
+description: 'Delete preview environment from S3 and invalidate CloudFront cache'
+
+inputs:
+  aws_account_id:
+    required: true
+    description: 'AWS Account ID'
+  gh_assume_role:
+    required: true
+    description: 'GitHub Assume Role'
+  environment:
+    required: true
+    description: 'Environment name'
+  environment_url:
+    required: true
+    description: 'Base URL for the environment'
+  s3_bucket:
+    required: true
+    description: 'S3 bucket name'
+  cloudfront_distribution_id:
+    required: true
+    description: 'CloudFront distribution ID'
+  pr_number:
+    required: true
+    description: 'Pull Request number'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set deployment path
+      id: set-path
+      shell: bash
+      run: |
+        echo "s3_path=preview-envs/PR-${{ inputs.pr_number }}/" >> $GITHUB_OUTPUT
+        echo "cf_path=/preview-envs/PR-${{ inputs.pr_number }}/*" >> $GITHUB_OUTPUT
+
+    - name: Remove files from S3 bucket
+      id: aws-sync
+      shell: bash
+      run: |
+        aws s3 rm s3://${{ inputs.s3_bucket }}/${{ steps.set-path.outputs.s3_path }} --recursive
+
+    - name: Invalidate CloudFront cache
+      id: cf-cache-invalidate
+      shell: bash
+      run: |
+        INVALIDATION_ID=$(aws cloudfront create-invalidation \
+          --distribution-id ${{ inputs.cloudfront_distribution_id }} \
+          --paths "${{ steps.set-path.outputs.cf_path }}" \
+          --query 'Invalidation.Id' --output text)
+
+        echo "Waiting for CloudFront invalidation $INVALIDATION_ID to complete..."
+        aws cloudfront wait invalidation-completed \
+          --distribution-id ${{ inputs.cloudfront_distribution_id }} \
+          --id "$INVALIDATION_ID"
+        echo "CloudFront invalidation $INVALIDATION_ID completed"
