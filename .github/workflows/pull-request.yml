@@ -10,7 +10,7 @@ permissions:
   pull-requests: write # required for reviewdog to post PR comments
 
 jobs:
-  validate:
+  setup-and-quality-gates:
     runs-on: ubuntu-latest
     environment: preview
     defaults:
