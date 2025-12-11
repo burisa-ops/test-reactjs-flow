@@ -64,12 +64,6 @@ jobs:
           pr_number: ${{ github.event.pull_request.number }}
 
       - name: Comment Preview URL on PR
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh pr comment --edit-last ${{ github.event.pull_request.number }} --body "🚀 Preview environment URL: [${{ steps.deploy.outputs.env_url }}](${{ steps.deploy.outputs.env_url }})"
-
-      - name: Comment Preview URL on PR
         id: comment-preview-url
         uses: peter-evans/create-or-update-comment@v5.0.0
         with:
