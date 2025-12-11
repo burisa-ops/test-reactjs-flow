@@ -19,19 +19,37 @@ runs:
   using: "composite"
   steps:
     - name: Setup Node.js from .nvmrc
+      id: setup-node
       uses: actions/setup-node@v4
       with:
         node-version-file: .nvmrc
 
     - name: Setup ReviewDog
+      id: setup-reviewdog
       uses: reviewdog/action-setup@v1.5.0
       with:
         reviewdog_version: latest
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
+      id: configure-aws-credentials-oidc
+      uses: aws-actions/configure-aws-credentials@v5
       with:
         role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.gh_assume_role }}
         aws-region: us-east-1 # STS default region
-        role-chaining: |
-          - role-arn: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.deploy_role }}
+
+    - name: test identity 1
+      run: |
+        aws sts get-caller-identity
+
+    - name: Configure deployment role AWS Credentials
+      id: configure-aws-credentials-deploy
+      uses: aws-actions/configure-aws-credentials@v5
+      with:
+        aws-region: us-east-1
+        role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.deploy_role }}
+        role-session-name: github-fv-frontend
+        role-chaining: true
+
+    - name: test identity 2
+      run: |
+        aws sts get-caller-identity
