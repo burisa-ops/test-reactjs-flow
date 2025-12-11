@@ -50,6 +50,7 @@ runs:
         role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.deploy_role }}
         role-session-name: github-fv-frontend
         role-chaining: true
+        role-skip-session-tagging: true
 
     - name: test identity 2
       shell: bash
