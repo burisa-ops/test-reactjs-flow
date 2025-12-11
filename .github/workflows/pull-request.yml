@@ -10,17 +10,20 @@ permissions:
   pull-requests: write # required for reviewdog to post PR comments
 
 jobs:
-  setup-and-quality-gates:
+  pr-validate:
     runs-on: ubuntu-latest
     environment: preview
     defaults:
       run:
         shell: bash
+
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
+        id: checkout
         uses: actions/checkout@v4
       
       - name: Initial Setup
+        id: initial-setup
         uses: ./.github/actions/initial-setup
         with:          
           aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
@@ -28,4 +31,23 @@ jobs:
           environment: ${{ github.job.environment }}
 
       - name: Preparations and Quality Gates
+        id: quality-gates
         uses: ./.github/actions/install-quality-gates-setup
+
+      - name: Deploy Preview Environment
+        id: deploy
+        uses: ./.github/actions/deploy-to-aws
+        with:
+          aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
+          gh_assume_role: ${{ vars.GH_ASSUME_ROLE }}
+          environment: ${{ github.job.environment }}
+          environment_url: ${{ vars.ENVIRONMENT_URL }}
+          s3_bucket: ${{ vars.S3_BUCKET_NAME }}
+          cloudfront_distribution_id: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+          pr_number: ${{ github.event.pull_request.number }}
+
+      - name: Comment Preview URL on PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body "🚀 Preview environment URL: [${{ steps.deploy.outputs.env_url }}](${{ steps.deploy.outputs.env_url }})"

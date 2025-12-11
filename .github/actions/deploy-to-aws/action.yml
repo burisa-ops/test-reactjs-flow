@@ -1,0 +1,73 @@
+name: 'Deploy to AWS Environment'
+description: 'Deploys build output to S3 with CloudFront'
+
+inputs:
+  aws_account_id:
+    required: true
+    description: 'AWS Account ID'
+  gh_assume_role:
+    required: true
+    description: 'GitHub Assume Role'
+  environment:
+    required: true
+    description: 'Environment name'
+  environment_url:
+    required: true
+    description: 'Base URL for the environment'
+  s3_bucket:
+    required: true
+    description: 'S3 bucket name'
+  cloudfront_distribution_id:
+    required: true
+    description: 'CloudFront distribution ID'
+  pr_number:
+    required: false
+    description: 'Pull Request number (optional)'
+
+outputs:
+  env_url:
+    description: 'URL of the environment'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set deployment path
+      id: set-path
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.pr_number }}" ]; then
+          echo "s3_path=preview-envs/PR-${{ inputs.pr_number }}/" >> $GITHUB_OUTPUT
+          echo "cf_path=/preview-envs/PR-${{ inputs.pr_number }}/*" >> $GITHUB_OUTPUT
+        else
+          echo "s3_path=/" >> $GITHUB_OUTPUT
+          echo "cf_path=/*" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Sync build output to S3
+      id: aws-sync
+      shell: bash
+      run: |
+        aws s3 sync build/ s3://${{ inputs.s3_bucket }}/${{ steps.set-path.outputs.s3_path }} --delete
+
+    - name: Invalidate CloudFront cache
+      id: cf-cache-invalidate
+      shell: bash
+      run: |
+        aws cloudfront create-invalidation \
+          --distribution-id ${{ inputs.cloudfront_distribution_id }} \
+          --paths "${{ steps.set-path.outputs.cf_path }}"
+
+    - name: Output deployment URL
+      id: output-url
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.pr_number }}" ]; then
+          URL="${{ inputs.environment_url }}/preview-envs/PR-${{ inputs.pr_number }}/"
+        else
+          URL="${{ inputs.environment_url }}/envs/${{ inputs.environment }}/"
+        fi
+        echo "env_url=$URL" >> $GITHUB_OUTPUT
+
+outputs:
+  env_url:
+    value: ${{ steps.output-url.outputs.env_url }}
