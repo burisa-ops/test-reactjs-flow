@@ -34,6 +34,10 @@ jobs:
         id: quality-gates
         uses: ./.github/actions/install-quality-gates-setup
 
+      - name: Run Build
+        id: build
+        run: npm run build
+
       - name: Deploy Preview Environment
         id: deploy
         uses: ./.github/actions/deploy-to-aws
