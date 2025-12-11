@@ -38,6 +38,7 @@ runs:
         aws-region: us-east-1 # STS default region
 
     - name: test identity 1
+      shell: bash
       run: |
         aws sts get-caller-identity
 
@@ -51,5 +52,6 @@ runs:
         role-chaining: true
 
     - name: test identity 2
+      shell: bash
       run: |
         aws sts get-caller-identity
