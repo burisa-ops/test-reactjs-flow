@@ -65,9 +65,9 @@ runs:
       shell: bash
       run: |
         if [ -n "${{ inputs.pr_number }}" ]; then
-          URL="${{ inputs.environment_url }}/preview-envs/PR-${{ inputs.pr_number }}/"
+          URL="${{ inputs.environment_url }}/preview-envs/PR-${{ inputs.pr_number }}/index.html"
         else
-          URL="${{ inputs.environment_url }}/envs/${{ inputs.environment }}/"
+          URL="${{ inputs.environment_url }}/"
         fi
         echo "env_url=$URL" >> $GITHUB_OUTPUT
 

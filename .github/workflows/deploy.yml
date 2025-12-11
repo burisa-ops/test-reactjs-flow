@@ -1,26 +1,47 @@
-name: 'Pull Request pipeline'
+name: 'Deploy pipeline'
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-  
+  # automatic trigger on push to specific branches/tags
+  push:
+    branches:
+      - main
+
+  # manual trigger
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        type: choice
+        required: true
+        options:
+          - uat
+          - prod
+      ref:
+        description: 'Branch/tag to deploy ("release/x" is required for prod!)'
+        type: string
+        required: true
+        default: 'release/x'
+
 permissions:
   id-token: write # required for OIDC authentication
   contents: write # ensures the token can write repository content
-  pull-requests: write # required for reviewdog to post PR comments
 
 jobs:
-  pr-validate:
+  build-test-deploy:
     runs-on: ubuntu-latest
-    environment: preview
+    environment: 
+      name: ${{ github.event.inputs.environment || 'dev' }}
+      url: ${{ vars.ENVIRONMENT_URL }}
     defaults:
       run:
         shell: bash
 
     steps:
-      - name: Checkout Repository
-        id: checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: >-
+            ${{ github.event.inputs.ref || github.ref_name }}
 
       - name: Setup Node.js from .nvmrc
         id: setup-node
@@ -32,7 +53,7 @@ jobs:
         id: setup-reviewdog
         uses: reviewdog/action-setup@v1.5.0
         with:
-          reviewdog_version: 'v0.21.0'
+          reviewdog_version: latest
       
       - name: AWS Credentials Setup
         id: aws-credentials-setup
@@ -49,9 +70,9 @@ jobs:
 
       - name: Run Build
         id: build
-        run: PUBLIC_URL=/preview-envs/PR-${{ github.event.pull_request.number }}/ npm run build
+        run: npm run build
 
-      - name: Deploy Preview Environment
+      - name: Deploy Environment
         id: deploy
         uses: ./.github/actions/deploy-to-aws
         with:
@@ -61,23 +82,3 @@ jobs:
           environment_url: ${{ vars.ENVIRONMENT_URL }}
           s3_bucket: ${{ vars.S3_BUCKET_NAME }}
           cloudfront_distribution_id: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
-          pr_number: ${{ github.event.pull_request.number }}
-
-      - name: Find Preview URL on PR Comment
-        uses: peter-evans/find-comment@v3
-        id: comment-preview-url-find
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: Preview environment URL
-
-      - name: Comment Preview URL on PR
-        id: comment-preview-url
-        uses: peter-evans/create-or-update-comment@v5
-        with:
-          comment-id: ${{ steps.comment-preview-url-find.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          edit-mode: replace
-          body: |
-            🚀 Preview environment URL: [${{ steps.deploy.outputs.env_url }}](${{ steps.deploy.outputs.env_url }})
-          token: ${{ secrets.GITHUB_TOKEN }}

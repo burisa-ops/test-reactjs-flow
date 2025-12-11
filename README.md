@@ -9,7 +9,6 @@ A beautiful sample ReactJS application, designed for best practices, security, a
 
 ## ✨ Features
 - **Sleek modern UI** – clean, minimal and responsive
-- **Performance, security & accessibility**
 - **Built-in testing** (via Jest+RTL)
 - **CI/CD workflow** (GitHub Actions with build, test, lint & coverage)
 - **Production ready** (easy deployment)
