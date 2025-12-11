@@ -1,58 +1,32 @@
 name: 'initial-setup'
-description: 'Sets up Node.js and ReviewDog, configures AWS credentials'
+description: 'Sets up dependencies, configures AWS credentials'
 
 inputs:
-  node_version:
+  aws_account_id:
     required: true
-    description: 'NodeJS version'
-  environment:
-    required: true
-    description: 'Environment'
-  prod_aws_account_id:
-    required: true
-    description: 'PROD AWS Account ID'
-  uat_aws_account_id:
-    required: true
-    description: 'UAT AWS Account ID'
-  dev_aws_account_id:
-    required: true
-    description: 'DEV AWS Account ID'
+    description: 'AWS Account ID'
   gh_assume_role:
     required: true
-    description: 'GH Assume Role'
+    description: 'GitHub Assume Role ARN'  
+  environment:
+    required: true
+    description: 'Environment name'
 
 runs:
   using: "composite"
   steps:
-    - name: Setup Node.js
+    - name: Setup Node.js from .nvmrc
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ inputs.node_version }}
+        node-version-file: .nvmrc
 
     - name: Setup ReviewDog
       uses: reviewdog/action-setup@v1.5.0
       with:
         reviewdog_version: latest
 
-    - name: Configure AWS Credentials
-      id: set-credentials
-      shell: bash
-      run: |
-        ENVIRONMENT="${{ inputs.environment }}"
-        if [[ "$ENVIRONMENT" == "prod" ]]
-        then
-          echo "role_arn=arn:aws:iam::${{ inputs.prod_aws_account_id }}:role/${{ inputs.gh_assume_role }}" >> $GITHUB_OUTPUT
-        elif [[ "$ENVIRONMENT" == "uat" ]]
-        then
-          echo "role_arn=arn:aws:iam::${{ inputs.uat_aws_account_id }}:role/${{ inputs.gh_assume_role }}" >> $GITHUB_OUTPUT
-        else
-          echo "role_arn=arn:aws:iam::${{ inputs.dev_aws_account_id }}:role/${{ inputs.gh_assume_role }}" >> $GITHUB_OUTPUT
-        fi
-
-        echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
-
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: ${{ steps.set-credentials.outputs.role_arn }}
+        role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.gh_assume_role }}
         aws-region: us-east-1 # STS default region

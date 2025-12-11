@@ -110,3 +110,4 @@ jobs:
           echo "CDN cache reset..."
           aws --version
           aws sts get-caller-identity
+
