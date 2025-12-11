@@ -91,4 +91,4 @@ PRs are welcome! Please lint and test before sending :)
 ---
 
 ## 📄 License
-MIT
+Unlicensed
