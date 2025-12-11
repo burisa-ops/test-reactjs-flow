@@ -1,4 +1,4 @@
-name: 'Pull Request pipeline'
+name: 'Pull Request Teardown pipeline'
 
 on:
   pull_request:
