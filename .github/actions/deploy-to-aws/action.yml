@@ -49,9 +49,16 @@ runs:
       id: cf-cache-invalidate
       shell: bash
       run: |
-        aws cloudfront create-invalidation \
+        INVALIDATION_ID=$(aws cloudfront create-invalidation \
           --distribution-id ${{ inputs.cloudfront_distribution_id }} \
-          --paths "${{ steps.set-path.outputs.cf_path }}"
+          --paths "${{ steps.set-path.outputs.cf_path }}" \
+          --query 'Invalidation.Id' --output text)
+
+        echo "Waiting for CloudFront invalidation $INVALIDATION_ID to complete..."
+        aws cloudfront wait invalidation-completed \
+          --distribution-id ${{ inputs.cloudfront_distribution_id }} \
+          --id "$INVALIDATION_ID"
+        echo "CloudFront invalidation $INVALIDATION_ID completed"
 
     - name: Output deployment URL
       id: output-url
