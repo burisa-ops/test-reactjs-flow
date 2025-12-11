@@ -24,10 +24,6 @@ inputs:
     required: false
     description: 'Pull Request number (optional)'
 
-outputs:
-  env_url:
-    description: 'URL of the environment'
-
 runs:
   using: "composite"
   steps:
@@ -70,4 +66,5 @@ runs:
 
 outputs:
   env_url:
+    description: 'URL of the environment'
     value: ${{ steps.output-url.outputs.env_url }}
