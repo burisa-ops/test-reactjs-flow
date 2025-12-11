@@ -43,7 +43,7 @@ runs:
       id: aws-sync
       shell: bash
       run: |
-        aws s3 sync build/ s3://${{ inputs.s3_bucket }}/${{ steps.set-path.outputs.s3_path }} --delete
+        aws s3 sync build/ s3://${{ inputs.s3_bucket }}/${{ steps.set-path.outputs.s3_path }} --delete --sse AES256
 
     - name: Invalidate CloudFront cache
       id: cf-cache-invalidate
