@@ -32,7 +32,7 @@ jobs:
         id: setup-reviewdog
         uses: reviewdog/action-setup@v1.5.0
         with:
-          reviewdog_version: 0.21.0
+          reviewdog_version: 'v0.21.0'
       
       - name: AWS Credentials Setup
         id: aws-credentials-setup
