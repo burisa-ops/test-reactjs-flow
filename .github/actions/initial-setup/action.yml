@@ -30,28 +30,16 @@ runs:
       with:
         reviewdog_version: latest
 
-    - name: Configure AWS credentials
-      id: configure-aws-credentials-oidc
+    - name: Configure AWS credentials (chained)
       uses: aws-actions/configure-aws-credentials@v5
       with:
-        role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.gh_assume_role }}
         aws-region: us-east-1 # STS default region
+        role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.gh_assume_role }}
+        role-chaining: |
+          - role-arn: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.deploy_role }}
+            role-session-name: github-fv-frontend
 
     - name: test identity 1
-      shell: bash
-      run: |
-        aws sts get-caller-identity
-
-    - name: Configure deployment role AWS Credentials
-      id: configure-aws-credentials-deploy
-      uses: aws-actions/configure-aws-credentials@v5
-      with:
-        aws-region: us-east-1
-        role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.deploy_role }}
-        role-session-name: github-fv-frontend
-        role-chaining: true
-
-    - name: test identity 2
       shell: bash
       run: |
         aws sts get-caller-identity
