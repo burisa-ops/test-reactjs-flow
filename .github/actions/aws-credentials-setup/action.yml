@@ -1,0 +1,36 @@
+name: 'Prepare AWS Credentials'
+description: 'Configures AWS credentials'
+
+inputs:
+  aws_account_id:
+    required: true
+    description: 'AWS Account ID'
+  gh_assume_role:
+    required: true
+    description: 'GitHub Assume Role ARN'
+  deploy_role:
+    required: true
+    description: 'Elevated deployment role'
+  environment:
+    required: true
+    description: 'Environment name'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure AWS credentials (chained)
+      uses: aws-actions/configure-aws-credentials@v5.1.1
+      with:
+        aws-region: us-east-1 # STS default region
+        role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.gh_assume_role }}
+        role-session-name: github-fv-frontend
+
+    - name: Configure deployment role AWS Credentials
+      id: configure-aws-credentials-deploy
+      uses: aws-actions/configure-aws-credentials@v5.1.1
+      with:
+        aws-region: us-east-1
+        role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.deploy_role }}
+        role-session-name: github-fv-frontend
+        role-chaining: true
+        role-skip-session-tagging: true

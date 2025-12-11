@@ -85,10 +85,5 @@ This exports static files to the `build/` folder. You can deploy on any static h
 
 ---
 
-## 🤝 Contributing
-PRs are welcome! Please lint and test before sending :)
-
----
-
 ## 📄 License
-MIT
+Unlicensed

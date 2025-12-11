@@ -1,4 +1,4 @@
-name: 'install-quality-gates-setup'
+name: 'Quality Gates Setup'
 description: 'Sets up package installation and caching, runs defined Quality Gates'
 
 runs:
