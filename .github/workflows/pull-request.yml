@@ -49,7 +49,7 @@ jobs:
 
       - name: Run Build
         id: build
-        run: npm run build
+        run: npm run build -- --public-url /preview-envs/PR-${{ github.event.pull_request.number }}/
 
       - name: Deploy Preview Environment
         id: deploy
